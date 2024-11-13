@@ -208,6 +208,7 @@ FRESULT open_append (
 );
 
 FRESULT f_mount (BYTE, FATFS*);						/* Mount/Unmount a logical drive */
+FRESULT chk_mounted (const TCHAR **path, FATFS **rfs, BYTE chk_wp);	/* Check if the file system object is valid or not */
 FRESULT f_open (FIL*, const TCHAR*, BYTE);			/* Open or create a file */
 FRESULT f_read (FIL*, void*, UINT, UINT*);			/* Read data from a file */
 FRESULT f_lseek (FIL*, DWORD);						/* Move file pointer of a file object */
