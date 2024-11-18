@@ -2012,7 +2012,7 @@ BYTE check_fs (	/* 0:FAT-VBR, 1:Valid BR but not FAT, 2:Not a BR, 3:Disk error *
 /* Check if the file system object is valid or not                       */
 /*-----------------------------------------------------------------------*/
 
-static
+
 FRESULT chk_mounted (	/* FR_OK(0): successful, !=0: any error occurred */
 	const TCHAR **path,	/* Pointer to pointer to the path name (drive number) */
 	FATFS **rfs,		/* Pointer to pointer to the found file system object */
