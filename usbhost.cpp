@@ -36,7 +36,7 @@ int mscTstUnitReady();
 int mscInquiry();
 int mscReadCapacity();
 int mscRequestSense();
-int mscReceiveWrapper(int pipe, u32 stall);
+int mscReceiveWrapper(int pipe, int stall);
 int mscReadBlock(u32 lba, char *buf);
 int mscWriteBlock(u32 lba, char *buf);
 const char *scsi2asc(int code);
@@ -551,7 +551,7 @@ uhInitEnum()						// uhin
     step13:
 	VERBOSE2 printf("Step13 get interf descr\n");	// step13 get interf. descr
 	UHLOG("step13 get interf descr");
-	if (lng> sizeof(uconf)) lng= sizeof(uconf);
+	if ((unsigned)lng> sizeof(uconf)) lng= sizeof(uconf);
 	urFill( USB_REQ_RECIP_DEVICE|USB_REQ_TYPE_STANDARD|USB_REQ_DIR_IN,
 		USB_REQ_GET_DESCRIPTOR,			// get descriptor
 		USB_DT_CONFIGURATION<<8|(confno-1),
@@ -873,7 +873,7 @@ uhReceivePipe(int pipe, u8 *buf, int lng)
 	isr= usb->UOTGHS_HSTPIPISR[pipe];
 	dlng= isr>> UOTGHS_HSTPIPISR_PBYCT_Pos;
 	memset(buf, 0, lng);
-	memcpy(buf, uhx.fifoaddr[pipe], dlng<lng? dlng: lng);
+	memcpy(buf, uhx.fifoaddr[pipe], dlng<(unsigned)lng? dlng: lng);
 	if ((uhstate.verbose>0) && ((uhstate.verbose>1)||(ret!=0))){
 		printf("uhReceivePipe %s lng=%d(%X) ",
 			ret==0? "ok": "error", dlng, dlng);
@@ -948,7 +948,7 @@ uhSend(int pipe, u8 *buf, int lng)
 	uhx.it.mask=  UOTGHS_HSTPIPISR_TXOUTI;
 	uhx.it.done= 0;
 	dlng= uhx.devpipeoutLng;
-	if ((dlng==0)||(dlng>lng))
+	if ((dlng==0)||(dlng>(unsigned)lng))
 		dlng= lng;
 	if (uhDmaSetupOut(pipe, buf, dlng)<0){			// fill fifo
 			ret= uhError(UHERROR_INTERN);
@@ -1027,7 +1027,7 @@ uhReceive(int pipe, u8 *buf, int lng, int tout)
 	usb->UOTGHS_HSTPIPIDR[pipe]= UOTGHS_HSTPIPIDR_RXINEC;	// en tr empty int
 	usb->UOTGHS_HSTPIPIER[pipe]= UOTGHS_HSTPIPIER_PFREEZES;	// freeze pipe
 	if (uhstate.state< UHSTAT_ENUM) ret= UHERROR_NOTREADY;
-	if ((ret==0) && (dlng< clng)) {				// more
+	if ((ret==0) && (dlng< (unsigned)clng)) {				// more
 		cbuf+= dlng;
 		clng-= dlng;
 		goto more;
@@ -1108,7 +1108,7 @@ uhInterruptPipe(int pipe)
 	imr= usb->UOTGHS_HSTPIPIMR[pipe];
 	err= usb->UOTGHS_HSTPIPERR[pipe];
 	uhx.cnt.pipeint++;
-	if ((uhx.it.pipe==pipe) && ((uhx.it.mask&isr)!=0)&& (uhx.it.done==0)){
+	if ((uhx.it.pipe==(unsigned)pipe) && ((uhx.it.mask&isr)!=0)&& (uhx.it.done==0)){
 		uhx.it.done= 1;
 	endpipe:
 		uhx.it.isr= isr;
@@ -1120,7 +1120,7 @@ uhInterruptPipe(int pipe)
 	if (isr&UOTGHS_HSTPIPISR_RXSTALLDI){
 		VERBOSE2 uhDumpx(pipe,"ERROR usb pipe STALL", 0);	// STALL
 		uhx.cnt.stall++;
-		if ((uhx.it.pipe==pipe) && (uhx.it.done==0)){
+		if ((uhx.it.pipe==(unsigned)pipe) && (uhx.it.done==0)){
 			uhx.it.done= UHERROR_STALL;
 			goto endpipe;
 		}
@@ -1330,7 +1330,7 @@ typedef struct _scsiSense {
 int mscReceive(u8 *cbwcb, int cbwcblng, u8 *buf, int datalng, int tout);
 int mscSend(u8 *cbwcb, int cbwcblng, u8 *buf, int datalng);
 int mscSendWrapper(int pipe, u8 *cbwcb, int flags, int cbwcblng, int datalng);
-int mscReceiveWrapper(int pipe, u32 stall);
+int mscReceiveWrapper(int pipe, int stall);
 
 const char
 *scsi2asc(int code)
@@ -1563,7 +1563,7 @@ mscSendWrapper(int pipe, u8 *cbwcb, int flags, int cbwcblng, int datalng)
 //	receive msc wrapper
 //	verify wrapper
 int
-mscReceiveWrapper(int pipe, u32 stall)
+mscReceiveWrapper(int pipe, int stall)
 {	int i;
 	cswrap csw;
 	UHLOG("Recwrap:");
